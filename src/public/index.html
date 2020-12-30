@@ -42,13 +42,23 @@
 
 <body>
   <div class="wrapper">
-    <a class="button" href="#" onclick="relayToggle()">
-      Toggle Relay
+    <a class="button" href="#" onclick="relayToggleAPI()">
+      Toggle Relay with API
+    </a>
+    <a class="button" href="#" style="margin-top: 1em" onclick="relayToggleSocket()">
+      Toggle Relay with Socket
     </a>
   </div>
+  <script src="/socket.io/socket.io.js"></script>
   <script>
-    function relayToggle() {
+    const socket = io();
+
+    function relayToggleAPI() {
       fetch('http://localhost:3000/toggle');
+    }
+
+    function relayToggleSocket() {
+      socket.emit("web_relay_toggle");
     }
   </script>
 </body>

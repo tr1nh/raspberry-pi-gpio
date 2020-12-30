@@ -170,3 +170,106 @@ Trong tệp index.js, chúng ta đã định nghĩa thư mục public sẽ chứ
 Sau khi lưu tệp index.html, mở trình duyệt web và truy cập địa chỉ http://localhost:3000, bạn sẽ thấy trang web mình vừa tạo.
 
 ![web-server](./screenshots/20201230084034-screenshot.png)
+
+### Socket.io
+
+Trong thư mục dự án đã tạo ở phần trước, mở tệp index.js và sửa lại nội dung như sau:
+
+```javascript
+const express = require('express');
+const app = express();
+const Gpio = require('onoff').Gpio;
+const relay = new Gpio(4, 'out');
+const http = require("http");
+const socketIo = require("socket.io");
+
+app.use('/', express.static(__dirname + '/public'));
+app.get('/toggle', (request, response) => {
+  relay.writeSync(relay.readSync() ^ 1);
+  io.sockets.emit("button_pressed", relay.readSync());
+  return response.status(200).send('Relay toggled');
+});
+
+const server = http.createServer(app).listen(3000, () => {
+  console.log('server listening...');
+});
+
+const io = socketIo();
+io.attach(server);
+io.on('connection', function (socket) {
+  console.log('New connection');
+
+  socket.on('web_relay_toggle', function (data) {
+    relay.writeSync(relay.readSync() ^ 1);
+  })
+});
+```
+
+Sửa nội dung tệp index.html nằm trong thư mục public như sau:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <title>Raspberry Pi - GPIO controller</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    body {
+      margin: 0;
+    }
+    .wrapper {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background-color: #1C1D21;
+    }
+    .button {
+      padding: 1em;
+      border: 2px solid #22BE8A;
+      color: #22BE8A;
+      text-decoration: none;
+    }
+    .button:hover {
+      background-color: #22BE8A;
+      color: #1C1D21;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrapper">
+    <a class="button" href="#" onclick="relayToggleAPI()">
+      Toggle Relay with API
+    </a>
+    <a class="button" href="#" style="margin-top: 1em" onclick="relayToggleSocket()">
+      Toggle Relay with Socket
+    </a>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    function relayToggleAPI() {
+      fetch('http://localhost:3000/toggle');
+    }
+    function relayToggleSocket() {
+      socket.emit("web_relay_toggle");
+    }
+  </script>
+</body>
+
+</html>
+```
+
+Sau khi lưu tệp index.html, mở trình duyệt web và truy cập địa chỉ http://localhost:3000, bạn sẽ thấy trang web mình vừa tạo.
+
+![web-server-with-socket](./screenshots/20201230091056-screenshot.png)
